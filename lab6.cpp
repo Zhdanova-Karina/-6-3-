@@ -57,9 +57,10 @@ public:
     bool getExistDalmatian() { return existDalmatian; }
     void setExistDalmatian(bool existDalamtian) { this->existDalmatian = existDalamtian; }
 
-    // Метод, который будет перегружен в производном классе
-    virtual void display() {
-        cout << "Место: " << name << (existDalmatian ? " (далматинец есть)" : " (далматинца нет)") << endl;
+    // Перегрузка оператора <<
+    friend ostream& operator<<(ostream& os, const PlaceWithDalmatian& place) {
+        os << "Место: " << place.name << (place.existDalmatian ? " (далматинец есть)" : " (далматинца нет)");
+        return os;
     }
     // Перегрузка оператора присваивания
     PlaceWithDalmatian& operator=(const PlaceWithDalmatian& other) {
@@ -97,10 +98,11 @@ public:
     void CodeOfCage(Level& level, Game& game, int number);
 
     string getAnswerCode() { return answer; }
-    // Перегрузка метода display() с вызовом метода базового класса
-    void display() override {
-        PlaceWithDalmatian::display(); // Вызов метода базового класса
-        cout << "Ответ для клетки: " << answer << endl;
+    // Перегрузка оператора <<
+    friend ostream& operator<<(ostream& os, const Cage& cage) {
+        os << static_cast<const PlaceWithDalmatian&>(cage); // Вызов оператора << для базового класса
+        os << "\nОтвет для клетки: " << cage.answer;
+        return os;
     }
 
     // Перегрузка метода display() без вызова метода базового класса
@@ -165,30 +167,26 @@ int Game::countDalmatinsFound = 0;
 int main() {
     setlocale(LC_ALL, "RU");
     /*перегрузка метода базового класса в производном классе (с вызовом метода базового класса и без такого вызова)*/
-    PlaceWithDalmatian place1("Стадион", true);
+    PlaceWithDalmatian place1("Клетка", true);
     Cage cage1("123");
 
-    // Вызов метода базового класса
-    place1.display();
+    // Использование перегруженного оператора <<
+    cout << place1 << endl;
+    cout << cage1 << endl;
+    cout << "Дополнительная информация о клетке: Здесь есть далматинец! Освободите его!" << endl;
 
-    // Вызов перегруженного метода Cage с вызовом базового класса
-    cage1.display();
-
-    // Вызов перегруженного метода Cage без вызова базового класса
-    cage1.display("Здесь есть далматинец! Освободите его!");
-
-    /*в конструкторе производного класса с параметрами вызов конструктора базового класса*/
     Dalmatian myDalmatian("Понго");
     Cage myCage("Стадион", myDalmatian, true, "1234");
 
     cout << "Информация о клетке:" << endl;
-    myCage.display();
-    // Присваиваем новый объект
+    cout << myCage << endl;
+
+    // Перегрузка оператора присваивания
     Cage anotherCage;
     anotherCage = myCage; // Используем перегруженный оператор присваивания
 
     cout << "Информация о клетке после присваивания:" << endl;
-    anotherCage.display();
+    cout << anotherCage << endl;
 
     /*Игра*/
     Game game;
