@@ -5,8 +5,8 @@
 #include <locale.h>
 #include <conio.h>
 #include <stdexcept>
-#include <sstream> // Для stringstream
-#include <limits> // Для numeric_limits
+#include <sstream> 
+
 #include <stdio.h>
 
 using namespace std;
@@ -61,6 +61,15 @@ public:
     virtual void display() {
         cout << "Место: " << name << (existDalmatian ? " (далматинец есть)" : " (далматинца нет)") << endl;
     }
+    // Перегрузка оператора присваивания
+    PlaceWithDalmatian& operator=(const PlaceWithDalmatian& other) {
+        if (this != &other) {
+            name = other.name;
+            existDalmatian = other.existDalmatian;
+            dalmatian = other.dalmatian; // Предполагается, что оператор присваивания перегружен в Dalmatian
+        }
+        return *this;
+    }
 };
 
 class Cage: public PlaceWithDalmatian {
@@ -74,6 +83,15 @@ public:
     // Конструктор с параметрами, вызывающий конструктор базового класса
     Cage(string name, Dalmatian dalmatian, bool trueORfalse, string answer)
         : PlaceWithDalmatian(name, dalmatian, trueORfalse), answer(answer) {}
+    // Перегрузка оператора присваивания
+    Cage& operator=(const Cage& other) {
+        if (this != &other) {
+            PlaceWithDalmatian::operator=(other); // Вызов оператора присваивания базового класса
+            answer = other.answer;
+        }
+        return *this;
+    }
+
 
     int getHintForCode();
     void CodeOfCage(Level& level, Game& game, int number);
@@ -165,6 +183,12 @@ int main() {
 
     cout << "Информация о клетке:" << endl;
     myCage.display();
+    // Присваиваем новый объект
+    Cage anotherCage;
+    anotherCage = myCage; // Используем перегруженный оператор присваивания
+
+    cout << "Информация о клетке после присваивания:" << endl;
+    anotherCage.display();
 
     /*Игра*/
     Game game;
