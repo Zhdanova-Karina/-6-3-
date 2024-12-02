@@ -20,21 +20,44 @@ class Game;
 class PlaceWithDalmatian;
 class Level;
 
-class Dalmatian {
-private:
+// Абстрактный класс Dog
+class Dog {
+protected:
     string name;
+
 public:
-    Dalmatian() {}
-    Dalmatian(string name) {
-        this->name = name;
+    Dog(){}
+    Dog(string name) : name(name) {}
+
+    // Чисто виртуальная функция, которая должна быть реализована в производных классах
+    virtual void bark() const = 0;
+
+    // Функция для получения имени собаки
+    string getName() const { return name; }
+
+    // Чисто виртуальная функция для получения информации о собаке
+    virtual string getDetails() const = 0;
+};
+
+// Производный класс Dalmatian от Dog
+class Dalmatian : public Dog {
+public:
+    Dalmatian(){}
+    Dalmatian(string name) : Dog(name) {}
+
+    // Реализация функции bark
+    void bark() const override {
+        cout << name << " говорит: Найди меня!" << endl;
     }
 
-    string getName() { return name; }
-
+    // Реализация функции getDetails
+    string getDetails() const override {
+        return "Этого далматинца зовут " + name + ".";
+    }
 };
 
 // Базовый класс
-class PlaceWithDalmatian {
+class Place {
 protected:
     string name;
     bool existDalmatian;
@@ -43,14 +66,14 @@ public:
     Dalmatian dalmatian;
 
     // Конструктор по умолчанию
-    PlaceWithDalmatian() : name(""), existDalmatian(false), dalmatian("") {}
+    Place() : name(""), existDalmatian(false), dalmatian("") {}
 
     // Конструктор с параметрами
-    PlaceWithDalmatian(string name, Dalmatian dalmatian, bool trueORfalse)
+    Place(string name, Dalmatian dalmatian, bool trueORfalse)
         : name(name), existDalmatian(trueORfalse), dalmatian(dalmatian) {}
 
     // Конструктор для задания имени и наличия далматинца
-    PlaceWithDalmatian(string name, bool trueORfalse)
+    Place(string name, bool trueORfalse)
         : name(name), existDalmatian(trueORfalse) {}
 
     string getName() { return name; }
@@ -58,12 +81,12 @@ public:
     void setExistDalmatian(bool existDalamtian) { this->existDalmatian = existDalamtian; }
 
     // Перегрузка оператора <<
-    friend ostream& operator<<(ostream& os, const PlaceWithDalmatian& place) {
+    friend ostream& operator<<(ostream& os, const Place& place) {
         os << "Место: " << place.name << (place.existDalmatian ? " (далматинец есть)" : " (далматинца нет)");
         return os;
     }
     // Перегрузка оператора присваивания
-    PlaceWithDalmatian& operator=(const PlaceWithDalmatian& other) {
+    Place& operator=(const Place& other) {
         if (this != &other) {
             name = other.name;
             existDalmatian = other.existDalmatian;
@@ -71,23 +94,27 @@ public:
         }
         return *this;
     }
+    // Виртуальная функция для получения подробной информации
+    virtual string getDetails() const {
+        return "Название: " + name + "\nСостояние: " + (existDalmatian ? "Далматинец на месте." : "Далматинца нет.");
+    }
 };
 
-class Cage: public PlaceWithDalmatian {
+class PlaceWithCode: public Place {
 private:
     string answer;
 public:
-    Cage() {}
-    Cage(string answer) {
+    PlaceWithCode() {}
+    PlaceWithCode(string answer) {
         this->answer = answer;
     }
     // Конструктор с параметрами, вызывающий конструктор базового класса
-    Cage(string name, Dalmatian dalmatian, bool trueORfalse, string answer)
-        : PlaceWithDalmatian(name, dalmatian, trueORfalse), answer(answer) {}
+    PlaceWithCode(string name, Dalmatian dalmatian, bool trueORfalse, string answer)
+        : Place(name, dalmatian, trueORfalse), answer(answer) {}
     // Перегрузка оператора присваивания
-    Cage& operator=(const Cage& other) {
+    PlaceWithCode& operator=(const PlaceWithCode& other) {
         if (this != &other) {
-            PlaceWithDalmatian::operator=(other); // Вызов оператора присваивания базового класса
+            Place::operator=(other); // Вызов оператора присваивания базового класса
             answer = other.answer;
         }
         return *this;
@@ -95,14 +122,19 @@ public:
 
 
     int getHintForCode();
-    void CodeOfCage(Level& level, Game& game, int number);
+    void CodeOfPlace(Level& level, Game& game, int number);
 
     string getAnswerCode() { return answer; }
     // Перегрузка оператора <<
-    friend ostream& operator<<(ostream& os, const Cage& cage) {
-        os << static_cast<const PlaceWithDalmatian&>(cage); // Вызов оператора << для базового класса
-        os << "\nОтвет для клетки: " << cage.answer;
+    friend ostream& operator<<(ostream& os, const PlaceWithCode& code) {
+        os << static_cast<const Place&>(code); // Вызов оператора << для базового класса
+        os << "\nКод для клетки: " << code.answer;
         return os;
+    }
+
+    // Переопределение виртуальной функции getDetails
+    string getDetails() const override {
+        return Place::getDetails() + "\nОтвет для клетки: " + answer;
     }
 
     // Перегрузка метода display() без вызова метода базового класса
@@ -132,8 +164,8 @@ private:
 
 public:
     Dalmatian dalmatians[MAX_DALMATIANS];
-    Cage cage;
-    PlaceWithDalmatian place[2][MAX_PLACE];
+    PlaceWithCode cage;
+    Place place[2][MAX_PLACE];
     Level(bool level, string name, int countDalmatins, int countPlace) {
         // Инициализация далматинцев
         dalmatians[0] = Dalmatian("Патч");
@@ -142,9 +174,9 @@ public:
             this->name = name;
             this->countDalmatins = countDalmatins;
             this->countPlace = countPlace;
-            place[1][0] = PlaceWithDalmatian("\n 1. Бочка", dalmatians[0], false);
-            place[1][1] = PlaceWithDalmatian("\n 2. Клетка", dalmatians[0], true);
-            place[1][2] = PlaceWithDalmatian("\n 3. Шкаф", dalmatians[0], false);
+            place[1][0] = Place("\n 1. Бочка", dalmatians[0], false);
+            place[1][1] = Place("\n 2. Клетка", dalmatians[0], true);
+            place[1][2] = Place("\n 3. Шкаф", dalmatians[0], false);
 
     }
 
@@ -167,26 +199,43 @@ int Game::countDalmatinsFound = 0;
 int main() {
     setlocale(LC_ALL, "RU");
     /*перегрузка метода базового класса в производном классе (с вызовом метода базового класса и без такого вызова)*/
-    PlaceWithDalmatian place1("Клетка", true);
-    Cage cage1("123");
+    Place cage("Клетка", true);
+    PlaceWithCode code1("123");
 
     // Использование перегруженного оператора <<
-    cout << place1 << endl;
-    cout << cage1 << endl;
-    cout << "Дополнительная информация о клетке: Здесь есть далматинец! Освободите его!" << endl;
+    cout << cage << endl;
+    cout << code1 << endl;
+    cout << "Дополнительная информация о месте: Здесь есть далматинец! Освободите его!" << endl;
 
-    Dalmatian myDalmatian("Понго");
-    Cage myCage("Стадион", myDalmatian, true, "1234");
+    Dalmatian dalmatian("Понго");
+    PlaceWithCode garage("Гараж", dalmatian, true, "11111");
 
-    cout << "Информация о клетке:" << endl;
-    cout << myCage << endl;
+    cout << "Информация о месте:" << endl;
+    cout << garage << endl;
 
     // Перегрузка оператора присваивания
-    Cage anotherCage;
-    anotherCage = myCage; // Используем перегруженный оператор присваивания
+    PlaceWithCode anotherCage;
+    anotherCage = garage; // Используем перегруженный оператор присваивания
 
-    cout << "Информация о клетке после присваивания:" << endl;
+    cout << "Информация о месте после присваивания:" << endl;
     cout << anotherCage << endl;
+
+    // Получение деталей через базовый класс
+    Place* placePtr = &garage;
+    cout << "Детали через указатель на базовый класс:" << endl;
+    cout << placePtr->getDetails() << endl;
+    cout << "Создание абстрактного класса" << endl;
+    // Создание объекта Dalmatian
+    Dalmatian Patch("Патч");
+
+    // Вызов методов
+    Patch.bark();
+    cout << Patch.getDetails() << endl;
+
+    // Использование указателя на абстрактный класс Dog
+    Dog* dogPtr = &Patch;
+    dogPtr->bark();
+    cout << dogPtr->getDetails() << endl;
 
     /*Игра*/
     Game game;
@@ -315,13 +364,13 @@ void Level::Level_2(Level& level, Game& game) {
             if (number != 2) dalmatianFound(level, game, number, 1);
             else {
                 cout << "\nО нет! Клетка закрыта на замок! Вам нужно отгадать код!" << endl;
-                cage.CodeOfCage(level, game, number);
+                cage.CodeOfPlace(level, game, number);
             }
         }
         else game.PrintRepeatInput();
     }
 }
-int Cage::getHintForCode() {
+int PlaceWithCode::getHintForCode() {
     string input; // Используем строку для ввода
     try {
         cout << "Нажмите *, чтобы получить подсказку" << endl;
@@ -358,9 +407,9 @@ int Cage::getHintForCode() {
     }
 }
 
-void Cage::CodeOfCage(Level& level, Game& game, int number) {
+void PlaceWithCode::CodeOfPlace(Level& level, Game& game, int number) {
     string input;
-    Cage cage("17F"); // Например, правильный ответ
+    PlaceWithCode cage("17F"); // Например, правильный ответ
 
     while (true) {
         // Метод получения подсказки
