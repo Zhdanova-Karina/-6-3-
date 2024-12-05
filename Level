@@ -1,0 +1,175 @@
+import java.util.Scanner;
+import java.util.InputMismatchException;
+
+
+class Level implements Cloneable {
+    public static final int MAX_DALMATIANS = 4;
+    public static final int MAX_PLACE = 3;
+    private String name;
+    private int countDalmatins, countPlace;
+
+    public Dalmatin[] dalmatins = new Dalmatin[MAX_DALMATIANS];
+    public PlaceWithCode cage;
+    public Place[] places = new Place[MAX_PLACE]; // Двумерный массив мест
+
+    Level(String name) {
+        // Инициализация далматинцев
+        dalmatins[0] = new Dalmatin("Патч");
+        dalmatins[1] = new Dalmatin("Пэдди");
+        dalmatins[2] = new Dalmatin("Понго");
+        dalmatins[3] = new Dalmatin("Ролли");
+            this.name = name;
+            countDalmatins = 1;
+        countPlace = 3;
+            places[0] = new Place("1. Бочка", false);
+            places[1] = new Place("2. Клетка", true);
+            places[2] = new Place("3. Шкаф", false);
+    }
+
+    @Override
+    protected Object clone() throws CloneNotSupportedException {
+        Level cloned = (Level) super.clone();
+
+        // Глубокое клонирование для массива мест
+        cloned.places = new Place[MAX_PLACE];
+        for (int j = 0; j < countPlace; j++) {
+            if (this.places[j] != null) {
+                cloned.places[j] = (Place) this.places[j].clone(); // Глубокое клонирование для мест
+            }
+        }
+
+        return cloned;
+    }
+
+    public Level deepClone() throws CloneNotSupportedException {
+        return (Level) this.clone(); // Может просто использовать clone() для глубокого клонирования
+    }
+    public void setPlaceName(int index, String name) {
+        if (index >= 0 && index < countPlace && places[index] != null) {
+            places[index].setName(name);
+        }
+    }
+
+    public int getCountPlace() {
+        return countPlace;
+    }
+
+    public int getCountDalmatins() {
+        return countDalmatins;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public int PrintLocationPlace(int rowIndex, int countPlace) {
+        // Печатаем места
+        if (rowIndex < 0 || rowIndex > 1) {
+            System.out.println("Ошибка: неверный индекс строки.");
+            return -1; // Возвращаем -1 для обозначения ошибки
+        }
+
+        for (int i = 0; i < countPlace; i++) {
+            if (places[i] != null) { // Необходимо проверить, что место не равно null
+                System.out.println(places[i].getName());
+            }
+        }
+
+        // Запрашиваем ввод от пользователя
+        System.out.print("\nВведите пункт: ");
+        Scanner scanner = new Scanner(System.in);
+        int numberPlace;
+        // Проверка ввода
+        while (true) {
+            try {
+                numberPlace = scanner.nextInt();
+
+                // Проверяем на корректность диапазона
+                if (numberPlace < 1 || numberPlace > countPlace) {
+                    throw new IllegalArgumentException("Ошибка: число должно быть в пределах от 1 до " + countPlace + ".");
+                }
+
+                scanner.nextLine(); // Очищаем буфер ввода
+                return numberPlace; // Возвращаем корректный номер места
+            } catch (InputMismatchException e) {
+                System.out.println("Ошибка: введите корректное целое число.");
+                scanner.nextLine(); // Очищаем некорректный ввод
+            } catch (IllegalArgumentException e) {
+                System.out.println("Ошибка: " + e.getMessage());
+            } catch (Exception e) {
+                System.out.println("Неизвестная ошибка: " + e.getMessage());
+            }
+        }
+    }
+
+    public void ViewingFoundDalmatians(Game player) {
+        System.out.printf("\nВы нашли %d/%d далматинцев:\n", player.getCountDalmatins(), MAX_DALMATIANS);
+        for (int i = 0; i < player.getCountDalmatins(); i++) {
+            System.out.println(dalmatins[i].getName());
+        }
+    }
+
+    public void DalmatinFound(Game player, int number, int rowIndex) {
+        if (places[number - 1].getExistDalmatian()) {
+            player.PlusOne();
+            places[number - 1].setExistDalmatian(false);
+            ViewingFoundDalmatians(player);
+        } else {
+            System.out.println("Увы, здесь никого нет\n");
+        }
+    }
+
+    public int TransferLastLocation(Game player) {
+        char symbol;
+
+        // Проверяем, соответствует ли количество найденных далматинцев условиям
+        if (player.getCountDalmatins() == countDalmatins && player.getCountDalmatins() < MAX_DALMATIANS) {
+            System.out.println("\n\nНажмите *, чтобы перейти к следующей локации");
+
+            // Используем Scanner для получения ввода
+            Scanner scanner = new Scanner(System.in);
+
+            try {
+                symbol = scanner.next().charAt(0); // Читаем первый символ ввода
+
+                // Проверяем, является ли символ равным '*'
+                if (symbol == '*') {
+                    return 0; // Переход к следующей локации
+                } else {
+                    throw new IllegalArgumentException("Некорректный ввод. Пожалуйста, нажмите '*' для перехода.");
+                }
+            } catch (InputMismatchException e) {
+                System.out.println("Ошибка: введите корректный символ.");
+                scanner.nextLine(); // Очищаем некорректный ввод
+            } catch (IllegalArgumentException e) {
+                System.out.println("Ошибка: " + e.getMessage());
+            } catch (Exception e) {
+                System.out.println("Неизвестная ошибка: " + e.getMessage());
+            }
+        }
+
+        return 1; // Если не выполнены условия перехода, возвращаем 1
+    }
+
+    public int RangeCheck(int number, int range) {
+        return (number > 0 && number <= range) ? 0 : 1;
+    }
+
+    public void Level_2(Game game) {
+        PlaceWithCode cage = new PlaceWithCode("Клетка",true, "17F");
+        while (game.getCountDalmatins() < MAX_DALMATIANS) {
+            int number = PrintLocationPlace(1, MAX_PLACE);
+            if (RangeCheck(number, MAX_PLACE) == 0) {
+                if (number != 2) {
+                    DalmatinFound(game, number, 1);
+                } else {
+                    System.out.println("\nО нет! Клетка закрыта на замок! Вам нужно отгадать код!\n");
+                    cage.CodeOfPlace(this, game, number);
+                }
+            } else {
+                game.PrintRepeatInput();
+            }
+        }
+    }
+}
+
